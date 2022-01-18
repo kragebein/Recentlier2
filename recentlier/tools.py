@@ -9,24 +9,24 @@ from typing import Any
 
 @dataclass
 class Config:
-    read:bool = False
     username:str = 'changeme'
     client_secret:str = 'changeme'
     client_id:str = 'changeme'
     scope: str = [
             "playlist-read-private",
             "user-follow-read",
-            "playlist-modify-private"
+            "playlist-modify-private",
+            "playlist-modify-public"
             ],
     callback: str = "http://127.0.0.1:8080"
     playlist_name: str = 'Recentlier2'
     playlist_size:int = 50
+    playlist_id: str = None
     output: bool = True
     verbose: bool = False
 
 
     def __init__(self) -> None:
-        if not self.read:
             ''' Initialize the table if not already initialized'''
             self.load()
 
@@ -43,6 +43,7 @@ class Config:
                 self.callback = self.data['spotify']['callback']
                 self.playlist_name = self.data['playlist']['name']
                 self.playlist_size = self.data['playlist']['size']
+                self.playlist_id = self.data['playlist']['id']
                 self.output = self.data['output']['on']
                 self.verbose = self.data['output']['verbose']
 
@@ -66,14 +67,16 @@ class Config:
                             "playlist": {
                                 "_comment": "Playlist Information",
                                 "name": self.playlist_name,
-                                "size": self.playlist_size
+                                "size": self.playlist_size,
+                                "id": self.playlist_id
                                 },
                             "output": {
                                 "on": self.output,
                                 "verbose": self.verbose
                             }
 
-                        }))
+                        }, indent=2))
+        log(f'Updated config.json.')
 
 def log(n):
     ''' Print while logging'''
@@ -92,7 +95,7 @@ class Cache:
         
     async def write(self) -> None:
         ''' pickles and dumps the data '''
-        data = [self.obj.Artists, self.obj.Albums, self.obj.Tracks]
+        data = [self.obj.Artists, self.obj.Albums, self.obj.Tracks, self.obj.Playlist]
         try:
             with open('cache.db', 'wb') as handle:
                 log(f'Wrote {str(len(self.obj.Artists) + len(self.obj.Albums) + len(self.obj.Tracks))} objects to cache')
@@ -102,9 +105,9 @@ class Cache:
         
 
 
-    async def load(self) -> list:
+    async def load(self, main) -> None:
         ''' unpickles and returns the data from cache'''
-        data = ([], [], [])
+        data = ([], [], [], [])
         if os.path.exists('cache.db'):
             try:
                 with open('cache.db', 'rb') as handle:
@@ -118,24 +121,28 @@ class Cache:
         else:
             log('Unable to load cache. (no cache found)')
 
-        return [data[0], data[1], data[2]]
+        main.Artists = data[0]
+        main.Albums = data[1]
+        main.Tracks = data[2]
+        main.Playlist = data[3]
 
 
 class ProgressBar:
     
-    def __init__(self, end, progress):
+    def __init__(self, end):
         self.end = end
-        self.now = progress.progress
+        self.now = 0
 
-    def calculate(self, place):
+    def calculate(self):
         ''' Calculates at what percentage we are'''
+        self.now += 1
         return str(self.now/self.end * 100).split()[0][:4]
 
-    def progress(self, place):
-        print(f'\rCurrent job is at {self.calculate(place)}%', flush=True, end='')
+    def progress(self):
+        print(f'\r{self.calculate()}%', flush=True, end='')
 
     def done(self):
-        print('\n')
+        print('\r', flush=True, end='')
 
 class RecentError(BaseException):
     pass
