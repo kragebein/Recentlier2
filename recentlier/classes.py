@@ -5,6 +5,10 @@ class Track:
     id: str
     name: str
     release_date: str
+    duration: int
+    artist_id: str
+    artist_name: str
+    
 
     def __post_init__(self):
         ''' enables comparison and sorting'''
@@ -24,6 +28,9 @@ class Album:
     artist_name: str
     artist_id: str
 
+    def __eq__(self, id):
+        return self.id == id
+
 @dataclass
 class Artist:
     id: str
@@ -33,5 +40,10 @@ class Artist:
 @dataclass
 class Playlist:
     id: str
-    size: int
-    albums: str
+    name: str
+    owner: str
+    tracks: list
+
+
+    def __eq__(self, _in): 
+        return self.name == _in or self.id == _in
