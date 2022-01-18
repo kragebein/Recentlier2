@@ -127,3 +127,48 @@ class Spotify:
         except SpotifyException as R:
             success = await self.exceptionhandler(R)
             if success: self.get_several_albums(*args, **kwargs)
+
+    async def me(self, *args, **kwargs) -> spotipy.Spotify.me:
+        if not self.sp:
+            await self.client()
+        try:
+            return self.sp.me(*args, **kwargs)
+        except SpotifyException as R:
+            success = await self.exceptionhandler(R)
+            if success: self.me(*args, **kwargs)
+
+    async def playlists(self, *args, **kwargs) -> spotipy.Spotify.user_playlists:
+        if not self.sp:
+            await self.client()
+        try:
+            return self.sp.user_playlists(*args, **kwargs)
+        except SpotifyException as R:
+            success = await self.exceptionhandler(R)
+            if success: self.playlists(*args, **kwargs)
+
+    async def playlist(self, *args, **kwargs) -> spotipy.Spotify.user_playlist:
+        if not self.sp:
+            await self.client()
+        try:
+            return self.sp.user_playlist(*args, **kwargs)
+        except SpotifyException as R:
+            success = await self.exceptionhandler(R)
+            if success: self.playlist(*args, **kwargs)
+
+    async def create_playlist(self, *args, **kwargs) -> spotipy.Spotify.user_playlist_create:
+        """ Creates a playlist for a user
+
+    Parameters:
+        - user - the id of the user
+        - name - the name of the playlist
+        - public - is the created playlist public
+        - collaborative - is the created playlist collaborative
+        - description - the description of the playlist
+        """
+        if not self.sp:
+            await self.client()
+        try:
+            return self.sp.user_playlist_create(*args, **kwargs)
+        except SpotifyException as R:
+            success = await self.exceptionhandler(R)
+            if success: self.create_playlist(*args, **kwargs)
