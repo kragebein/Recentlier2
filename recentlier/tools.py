@@ -10,8 +10,7 @@ class Config:
     username:str = 'changeme'
     client_secret:str = 'changeme'
     client_id:str = 'changeme'
-    scope = [
-            "playlist-read-private",
+    scope = ["playlist-read-private", 
             "user-follow-read",
             "playlist-modify-private",
             "playlist-modify-public" 
@@ -61,7 +60,7 @@ class Config:
                                 "_comment": "Spotify Credentials",
                                 "client_id": self.client_id,
                                 "client_secret": self.client_secret,
-                                "scope": self.scope[0],
+                                "scope": self.scope,
                                 "callback": self.callback
                                 },
                             "playlist": {
