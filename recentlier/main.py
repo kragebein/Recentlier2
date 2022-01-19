@@ -29,12 +29,13 @@ class Recentlier:
         await self.cache.load(self)
         flags = Flags(self)
 
-        #artists = await self.populate_artists()
-        #await flags.check('artists', artists)
+        artists = await self.populate_artists()
+        await flags.check('artists', artists)
 
-        #albums = await self.populate_albums(artists)
-        #await flags.check('albums', albums)
+        albums = await self.populate_albums(artists)
+        await flags.check('albums', albums)
         flags.run_tracks = True
+        
         if flags.run_tracks:
             tracks = await self.populate_tracks(self.Albums)
             await flags.check('tracks', tracks)
