@@ -156,15 +156,6 @@ class Spotify:
             if success: self.playlist(*args, **kwargs)
 
     async def create_playlist(self, *args, **kwargs) -> spotipy.Spotify.user_playlist_create:
-        """ Creates a playlist for a user
-
-    Parameters:
-        - user - the id of the user
-        - name - the name of the playlist
-        - public - is the created playlist public
-        - collaborative - is the created playlist collaborative
-        - description - the description of the playlist
-        """
         if not self.sp:
             await self.client()
         try:
@@ -172,3 +163,31 @@ class Spotify:
         except SpotifyException as R:
             success = await self.exceptionhandler(R)
             if success: self.create_playlist(*args, **kwargs)
+
+    async def playlist_tracks(self, *args, **kwargs) -> spotipy.Spotify.playlist_tracks:
+        if not self.sp:
+            await self.client()
+        try:
+            return self.sp.playlist_tracks(*args, **kwargs)
+        except SpotifyException as R:
+            success = await self.exceptionhandler(R)
+            if success: self.playlist_tracks(*args, **kwargs)
+
+    async def add_tracks(self, *args, **kwargs) -> spotipy.Spotify.user_playlist_replace_tracks:
+        if not self.sp:
+            await self.client()
+        try:
+            return self.sp.user_playlist_replace_tracks(*args, **kwargs)
+        except SpotifyException as R:
+            success = await self.exceptionhandler(R)
+            if success: self.add_tracks(*args, **kwargs)
+
+
+    async def remove_playlist_tracks(self, *args, **kwargs) -> spotipy.Spotify.user_playlist_remove_all_occurrences_of_tracks:
+        if not self.sp:
+            await self.client()
+        try:
+            return self.sp.user_playlist_remove_all_occurrences_of_tracks(*args, **kwargs)
+        except SpotifyException as R:
+            success = await self.exceptionhandler(R)
+            if success: self.remove_playlist_tracks(*args, **kwargs)
