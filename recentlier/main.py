@@ -16,6 +16,7 @@ class Recentlier:
     spot = Spotify()
     albumbuffer:list = []
     tracks:list = []
+
     def __init__(self):
 
         self.Artists:list = []
@@ -23,7 +24,7 @@ class Recentlier:
         self.Tracks:list = []
         self.playlist = Playlists(self)
         self.cache = Cache(self)
-
+    
     async def run(self):
         # Preload from cache (if any)
         await self.cache.load(self)
@@ -34,12 +35,12 @@ class Recentlier:
 
         albums = await self.populate_albums(artists)
         await flags.check('albums', albums)
-        flags.run_tracks = True
+     #   flags.run_tracks = True
         
         if flags.run_tracks:
             tracks = await self.populate_tracks(self.Albums)
             await flags.check('tracks', tracks)
-
+        flags.update_playlist = True
         if flags.update_playlist:
             await self.playlist.update()
             await self.cache.write()
@@ -123,25 +124,19 @@ class Recentlier:
 
         for album in albums:
             data = await self.add_to_buffer(album.id)
+            progressbar.progress()
             if not data:
                 continue
             else:
                 for track in await self.get_track_data(data, album):
-                    if track.id in self.Tracks or track.id in Tracks:
-                        continue
-                    else:
-                        Tracks.append(track)
-            progressbar.progress()
+                    Tracks.append(track)
                         
 
         if len(self.albumbuffer) != 0:
             # Check if buffer has "leftover" albums in it.
 
             for track in await self.get_track_data(self.albumbuffer, album):
-                if track.id in self.Tracks or track.id in Tracks:
-                    continue
-                else:
-                    Tracks.append(track)
+                Tracks.append(track)
         progressbar.done()
         return Tracks
 
@@ -159,21 +154,24 @@ class Recentlier:
                 track_id = track['id']
                 track_name = track['name']
                 duration = track['duration_ms'] * 1000
+                track_artist_id = track['artists'][0]['id']
+                track_artist_name = track['artists'][0]['name']
         
 
-                if track_id in Tracks or track_id in self.Tracks:
+                if track_id in self.tracks:
                     continue
                 else:
-
-                    Tracks.append(
-                        Track(
-                            id=track_id,
-                            name=track_name,
-                            release_date=release_date,
-                            duration=duration,
-                            artist_id = _album.artist_id,
-                            artist_name = _album.artist_name
-                            ))
+                    if track_artist_id in self.Artists:
+                        self.tracks.append(track_id)
+                        Tracks.append(
+                            Track(
+                                id=track_id,
+                                name=track_name,
+                                release_date=release_date,
+                                duration=duration,
+                                artist_id = track_artist_id,
+                                artist_name = track_artist_name
+                                ))
         return Tracks
 
 
@@ -186,12 +184,13 @@ class Playlists():
         self.recentlier = recentlier
 
     async def update(self):
+        log(f'Playlist about to be updated.')
         self.playlist = await self.get_playlist()
         new_tracks = await self.order()
+        new_tracks = new_tracks[::-1]
         playlist_tracks = await self.get_playlist_tracks()
-
-        difference = len(set([i.id for i in new_tracks]).difference(playlist_tracks))
-        if difference == 0:
+  
+        if set([i.id for i in new_tracks]) == set(playlist_tracks):
             log('The local playlist and online playlist are identical.')
         else:
             me = await self.spot.me()
@@ -202,7 +201,7 @@ class Playlists():
                                       [i.id for i in new_tracks]
                                     )
             for track in new_tracks:
-                log(f'{track.artist_name} - {track.name}')
+                log(f'{track.artist_name} - {track.name} ({track.release_date})')
 
 
 
@@ -294,7 +293,7 @@ class Playlists():
         if new:
             spotify.config.playlist_id = playlist.id
             self.recentlier.Playlist = playlist
-            spotify.config.write()
+            #spotify.config.write()
             new = 0
         return playlist
 
@@ -306,5 +305,4 @@ class Playlists():
                         key=operator.attrgetter(
                             'release_date'
                             ))
-       
         return ordered[-int(self.spot.config.playlist_size):]
