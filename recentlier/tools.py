@@ -4,7 +4,6 @@ import pickle
 import sys
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
 
 @dataclass
 class Config:
@@ -15,8 +14,8 @@ class Config:
             "playlist-read-private",
             "user-follow-read",
             "playlist-modify-private",
-            "playlist-modify-public"
-            ],
+            "playlist-modify-public" 
+            ]
     callback: str = "http://127.0.0.1:8080"
     playlist_name: str = 'Recentlier2'
     playlist_size:int = 50
@@ -28,7 +27,6 @@ class Config:
     def __init__(self) -> None:
             ''' Initialize the table if not already initialized'''
             self.load()
-
 
     def load(self) -> dataclass:
         ''' Loads the config into class, and returns the class'''
