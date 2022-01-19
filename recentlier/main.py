@@ -40,7 +40,7 @@ class Recentlier:
         if flags.run_tracks:
             tracks = await self.populate_tracks(self.Albums)
             await flags.check('tracks', tracks)
-        flags.update_playlist = True
+     #   flags.update_playlist = True
         if flags.update_playlist:
             await self.playlist.update()
             await self.cache.write()
