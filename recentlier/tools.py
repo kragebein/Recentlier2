@@ -95,7 +95,7 @@ class Cache:
         
     async def write(self) -> None:
         ''' pickles and dumps the data '''
-        data = [self.obj.Artists, self.obj.Albums, self.obj.Tracks, self.obj.Playlist]
+        data = [self.obj.Artists, self.obj.Albums, self.obj.Tracks, self.obj.playlist.playlist]
         try:
             with open('cache.db', 'wb') as handle:
                 log(f'Wrote {str(len(self.obj.Artists) + len(self.obj.Albums) + len(self.obj.Tracks))} objects to cache')
@@ -124,7 +124,7 @@ class Cache:
         main.Artists = data[0]
         main.Albums = data[1]
         main.Tracks = data[2]
-        main.Playlist = data[3]
+        main.playlist.playlist = data[3]
 
 
 class ProgressBar:
@@ -143,6 +143,67 @@ class ProgressBar:
 
     def done(self):
         print('\r', flush=True, end='')
+
+class Flags:
+
+    def __init__(self, obj):
+        self.main = obj
+        self.run_tracks = False
+        self.update_playlist = False
+        
+    async def check(self, what, data):
+
+        if what == 'artists':
+
+            if len(data) > len(self.main.Artists):
+                log(f'Artists found: {str(len(data))} (new: {str(len(data) - len(self.main.Artists))})')
+                self.main.Artists = data
+                self.run_tracks = True
+
+            elif len(data) ==  len(self.main.Artists):
+                log(f'Artists found: {str(len(data))}')
+
+            elif len(data) < len(self.main.Artists):
+                len(f'Artists found: {str(len(data))} (removed: {str(len(self.main.Artists) - len(data))})')
+                self.main.Artists = data
+                self.run_tracks = True
+
+        elif what == 'albums':
+
+            if len(data) > len(self.main.Albums):
+                log(f'Albums found: {str(len(data))} (new: {str(len(data) - len(self.main.Albums))})')
+                self.main.Albums = data
+                self.run_tracks = True
+                await self.main.cache.write()
+
+            elif len(data) ==  len(self.main.Albums):
+                log(f'Albums found: {str(len(data))} (Nothing to update)')
+                self.run_tracks = False
+
+            elif len(data) < len(self.main.Albums):
+                len(f'Artists found: {str(len(data))} (removed: {str(len(self.main.Albums) - len(data))})')
+                self.main.Albums = data
+                self.run_tracks = True
+                await self.main.cache.write()
+
+        elif what == 'tracks':
+            
+            if len(data) > len(self.main.Tracks):
+                log(f'Tracks found: {str(len(data))} (new: {str(len(data) - len(self.main.Tracks))})')
+                self.main.Tracks = data
+                self.update_playlist = True
+                await self.main.cache.write()
+
+            elif len(data) ==  len(self.main.Tracks):
+                log(f'Tracks found: {str(len(data))}')
+
+            elif len(data) < len(self.main.Tracks):
+                len(f'Tracks found: {str(len(data))} (removed: {str(len(self.main.Tracks) - len(data))})')
+                self.main.Tracks = data
+                self.update_playlist = True
+                await self.main.cache.write()
+
+
 
 class RecentError(BaseException):
     pass
