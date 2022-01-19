@@ -41,7 +41,7 @@ class Recentlier:
             if flags.update_playlist:
                 await self.playlist.update()
                 await self.cache.write()
-                
+
             log(f'Sleeping for 6 hours.')
             await asyncio.sleep(21600)
 
@@ -155,7 +155,6 @@ class Recentlier:
                 duration = track['duration_ms'] * 1000
                 track_artist_id = track['artists'][0]['id']
                 track_artist_name = track['artists'][0]['name']
-        
 
                 if track_id in self.tracks:
                     continue
