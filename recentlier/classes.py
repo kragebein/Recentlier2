@@ -13,8 +13,7 @@ class Track:
         ''' enables comparison and sorting'''
         object.__setattr__(self, 'release_date', self.release_date)
 
-    def __repr__(self):
-        return self.id
+   
     
     def __eq__(self, _id): 
         return self.id == _id 
