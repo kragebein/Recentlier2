@@ -10,7 +10,7 @@ class Config:
     username:str = 'changeme'
     client_secret:str = 'changeme'
     client_id:str = 'changeme'
-    scope: str = [
+    scope = [
             "playlist-read-private",
             "user-follow-read",
             "playlist-modify-private",
@@ -26,6 +26,7 @@ class Config:
 
     def __init__(self) -> None:
             ''' Initialize the table if not already initialized'''
+            
             self.load()
 
     def load(self) -> dataclass:
@@ -60,7 +61,7 @@ class Config:
                                 "_comment": "Spotify Credentials",
                                 "client_id": self.client_id,
                                 "client_secret": self.client_secret,
-                                "scope": self.scope,
+                                "scope": self.scope[0],
                                 "callback": self.callback
                                 },
                             "playlist": {
