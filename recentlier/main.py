@@ -1,11 +1,8 @@
 #!/usr/bin/python3.10
-from enum import Enum
-import sys
 import operator
-import json
+import asyncio
 
 from typing import Any, List
-from unicodedata import name
 from recentlier.spotify import Spotify
 from recentlier.tools import log, Cache, ProgressBar, Flags
 from recentlier.classes import Artist, Playlist, Track, Album
@@ -27,23 +24,26 @@ class Recentlier:
     
     async def run(self):
         # Preload from cache (if any)
-        await self.cache.load(self)
-        flags = Flags(self)
+        while True:
+            await self.cache.load(self)
+            flags = Flags(self)
 
-        artists = await self.populate_artists()
-        await flags.check('artists', artists)
+            artists = await self.populate_artists()
+            await flags.check('artists', artists)
 
-        albums = await self.populate_albums(artists)
-        await flags.check('albums', albums)
-     #   flags.run_tracks = True
-        
-        if flags.run_tracks:
-            tracks = await self.populate_tracks(self.Albums)
-            await flags.check('tracks', tracks)
-     #   flags.update_playlist = True
-        if flags.update_playlist:
-            await self.playlist.update()
-            await self.cache.write()
+            albums = await self.populate_albums(artists)
+            await flags.check('albums', albums)
+            
+            if flags.run_tracks:
+                tracks = await self.populate_tracks(self.Albums)
+                await flags.check('tracks', tracks)
+
+            if flags.update_playlist:
+                await self.playlist.update()
+                await self.cache.write()
+                
+            log(f'Sleeping for 6 hours.')
+            await asyncio.sleep(21600)
 
     async def populate_artists(self) -> List[Artist]:
         ''' Creates a list of Artist-dataclasses. '''
@@ -99,7 +99,6 @@ class Recentlier:
             progressbar.progress()
         progressbar.done()
         return Albums
-    
 
     async def add_to_buffer(self, input: str) -> Any:
         ''' Return only when buffer is full'''
