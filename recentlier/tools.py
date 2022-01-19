@@ -1,8 +1,7 @@
 import json
 import os
 import pickle
-import asyncio
-
+import sys
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
@@ -50,6 +49,8 @@ class Config:
                 return self
         else:
             self.write()
+            log('Please update config.json')
+            sys.exit(0)
 
     def write(self) -> None:
         ''' Dumps the current config to config.json '''
