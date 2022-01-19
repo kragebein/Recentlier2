@@ -16,7 +16,7 @@ class Track:
    
     
     def __eq__(self, _id): 
-        return self.id == _id 
+        return self.id == _id or f'{self.artist_name} - {self.name}' == _id
 
 
 @dataclass
