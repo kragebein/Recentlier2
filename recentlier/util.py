@@ -80,11 +80,12 @@ class Config:
                         }, indent=2))
         log(f'Updated config.json.')
 
-def log(n):
+def log(n, silent=False):
     ''' Print while logging'''
     now = datetime.now().strftime("%d/%m/%y %H:%M:%S")
     now = f'[{now}] '
-    print(now + str(n))
+    if not silent:
+        print(now + str(n))
     with open('recentlier.log', 'a') as log:
         log.write(now+str(n)+'\n') 
 
