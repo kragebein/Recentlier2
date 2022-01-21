@@ -61,8 +61,6 @@ class Spotify:
         else:
             log('Unable to retrieve token!')
 
-            
-
     async def client(self) -> spotipy.Spotify:
         ''' Returns the spotify Client.'''
         if not self.token:
