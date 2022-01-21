@@ -149,8 +149,7 @@ class Recentlier:
 
         for album in results['albums']:
             release_date = album['release_date']
-            with open('data.txt', 'a') as handle:
-                handle.write(json.dumps(album, indent=2))
+
             for track in album['tracks']['items']:
                 track_id = track['id']
                 track_name = track['name']
@@ -186,6 +185,7 @@ class Recentlier:
 
                     if track_id in self.tracks:
                         continue
+                    
                     else:
                         if track_artist_id in self.Artists:
                             self.tracks.append(track_id)
@@ -202,7 +202,6 @@ class Recentlier:
 
 
 class Playlists():
-
     playlist: Playlist = []
     
     def __init__(self, recentlier):
