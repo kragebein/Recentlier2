@@ -2,6 +2,8 @@ import json
 import os
 import pickle
 import sys
+import requests
+
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -201,6 +203,17 @@ class Flags:
                 self.main.Tracks = data
                 self.update_playlist = True
                 await self.main.cache.write()
+
+class Version:
+
+    version = 0.2
+
+    def __init__(self):
+        print(f'Recentlier V2 -- version {self.version}')
+        r = requests.get('https://raw.githubusercontent.com/kragebein/Recentlier2/main/version.txt')
+        version = r.text()
+        if self.version != version:
+            print(f'A new version is available {self.version} -> {version}')
 
 
 
