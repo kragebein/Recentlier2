@@ -138,7 +138,7 @@ class ProgressBar:
         return str(self.now/self.end * 100).split()[0][:4]
 
     def progress(self):
-        print(f'\rWorking {self.calculate()}%', flush=True, end='')
+        print(f'\r{self.calculate()}% ', flush=True, end='')
 
     def done(self):
         print('\r', flush=True, end='')
