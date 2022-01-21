@@ -1,4 +1,5 @@
 #!/usr/bin/python3.10
+import json
 import operator
 import asyncio
 
@@ -148,7 +149,8 @@ class Recentlier:
 
         for album in results['albums']:
             release_date = album['release_date']
-
+            with open('data.txt', 'a') as handle:
+                handle.write(json.dumps(album, indent=2))
             for track in album['tracks']['items']:
                 track_id = track['id']
                 track_name = track['name']
@@ -157,7 +159,9 @@ class Recentlier:
                 track_artist_name = track['artists'][0]['name']
 
                 if track_id in self.tracks:
+                    # skip this track, if track id has been processed.
                     continue
+
                 else:
                     if track_artist_id in self.Artists:
                         self.tracks.append(track_id)
@@ -170,6 +174,30 @@ class Recentlier:
                                 artist_id = track_artist_id,
                                 artist_name = track_artist_name
                                 ))
+
+            while 'next' in album and album['next'] is not None:
+                album = await spotify.next(album)
+                for track in album['items']:
+                    track_id = track['id']
+                    track_name = track['name']
+                    duration = track['duration_ms'] * 1000
+                    track_artist_id = track['artists'][0]['id']
+                    track_artist_name = track['artists'][0]['name']
+
+                    if track_id in self.tracks:
+                        continue
+                    else:
+                        if track_artist_id in self.Artists:
+                            self.tracks.append(track_id)
+                            Tracks.append(
+                                Track(
+                                    id=track_id,
+                                    name=track_name,
+                                    release_date=release_date,
+                                    duration=duration,
+                                    artist_id = track_artist_id,
+                                    artist_name = track_artist_name
+                                    ))
         return Tracks
 
 
