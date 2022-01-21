@@ -2,6 +2,7 @@ import json
 import os
 import pickle
 import sys
+import time
 import requests
 
 from dataclasses import dataclass
@@ -206,16 +207,20 @@ class Flags:
 
 class Version:
 
-    version = 0.2
-
+    version = 2.02
+    text = None
     def __init__(self):
-        print(f'Recentlier V2 -- version {self.version}')
-        r = requests.get('https://raw.githubusercontent.com/kragebein/Recentlier2/main/version.txt')
-        version = r.text()
-        if self.version != version:
-            print(f'A new version is available {self.version} -> {version}')
-
-
+        self.text = f'Recentlier {self.version}'
+        try:
+            r = requests.get('https://raw.githubusercontent.com/kragebein/Recentlier2/main/version.txt')
+            version = r.text
+            if self.version < int(version):
+                self.text += f' - Update available: {self.version} -> {version}'
+        except:
+            pass
+        finally:
+            print(self.text)
+            time.sleep(1)
 
 class RecentError(BaseException):
     pass
