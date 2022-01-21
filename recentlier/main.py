@@ -5,7 +5,7 @@ import asyncio
 
 from typing import Any, List
 from recentlier.spotify import Spotify
-from recentlier.tools import log, Cache, ProgressBar, Flags
+from recentlier.tools import log, Cache, ProgressBar, Flags, Version
 from recentlier.classes import Artist, Playlist, Track, Album
 
 
@@ -16,6 +16,7 @@ class Recentlier:
     tracks:list = []
 
     def __init__(self):
+        Version()
 
         self.Artists:list = []
         self.Albums:list = []
@@ -75,6 +76,7 @@ class Recentlier:
             results = await spotify.artist_albums(artist.id, limit=50)
 
             for album in results['items']:
+
                 Albums.append(
                     Album(
                         id=album['id'],
@@ -88,6 +90,7 @@ class Recentlier:
                 results = await spotify.next(results)
 
                 for album in results['items']:
+
                     Albums.append(
                         Album(
                             id=album['id'],
@@ -185,7 +188,7 @@ class Recentlier:
 
                     if track_id in self.tracks:
                         continue
-                    
+
                     else:
                         if track_artist_id in self.Artists:
                             self.tracks.append(track_id)
