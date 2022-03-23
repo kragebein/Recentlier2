@@ -87,7 +87,12 @@ def log(n, silent=False):
     if not silent:
         print(now + str(n))
     with open('recentlier.log', 'a') as log:
-        log.write(now+str(n)+'\n') 
+        try:
+            log.write(now+str(n)+'\n') 
+        except UnicodeEncodeError:
+            log.write(now+str('UnicodeError - Unknown Track - Unkown Name (unknown Releasedate)')+'\n')
+            pass
+
 
 
 class Cache:
