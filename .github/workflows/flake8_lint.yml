@@ -9,7 +9,7 @@ on:
       - "!master" # excludes master
 jobs:
   flake8-lint:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     name: Checking for linting issues.
     steps:
       - name: Check out source repository
