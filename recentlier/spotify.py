@@ -16,7 +16,7 @@ class Spotify:
     sp = None
 
     async def exceptionhandler(self, e: SpotifyException) -> bool:
-        ''' Tries to handle exceptions '''
+        '''Tries to handle exceptions'''
 
         if e.http_status == 401:
             # No token was provided.
@@ -50,14 +50,14 @@ class Spotify:
         return False
 
     async def get_token(self) -> spotipy.client:
-        ''' Retrieves a workable token '''
+        '''Retrieves a workable token'''
 
         token = prompt_for_user_token(
             username=config.username,
             scope=','.join(i for i in config.scope),
             client_secret=config.client_secret,
             client_id=config.client_id,
-            redirect_uri=config.callback
+            redirect_uri=config.callback,
         )
 
         if token:
@@ -71,7 +71,7 @@ class Spotify:
             return None
 
     async def client(self) -> spotipy.Spotify:
-        ''' Returns the spotify Client.'''
+        '''Returns the spotify Client.'''
 
         if not self.token:
             await self.get_token()
