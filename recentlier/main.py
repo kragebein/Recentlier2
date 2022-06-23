@@ -1,6 +1,6 @@
 #!/usr/bin/python3.10
-import operator
 import asyncio
+import operator
 
 from typing import Any, List
 from recentlier.spotify import Spotify
@@ -15,6 +15,7 @@ class Recentlier:
     tracks: list = []
 
     def __init__(self):
+
         Version()
         self.Artists: list = []
         self.Albums: list = []
@@ -46,7 +47,7 @@ class Recentlier:
             await asyncio.sleep(21600)
 
     async def populate_artists(self) -> List[Artist]:
-        ''' Creates a list of Artist-dataclasses. '''
+        '''Creates a list of Artist-dataclasses.'''
         Artists = []
         spotify = self.spot
 
@@ -56,22 +57,17 @@ class Recentlier:
             if spotify.config.verbose:
                 log(f'Appended {artist["name"]} to Artists', silent=True)
 
-        while 'next' in results['artists'] \
-                and results['artists']['next'] is not None:
+        while 'next' in results['artists'] and results['artists']['next'] is not None:
             results = await spotify.next(results['artists'])
 
             for artist in results['artists']['items']:
-                Artists.append(
-                    Artist(
-                        id=artist['id'],
-                        name=artist['name']
-                        ))
+                Artists.append(Artist(id=artist['id'], name=artist['name']))
                 if spotify.config.verbose:
                     log(f'Appended {artist["name"]} to Artists', silent=True)
         return Artists
 
     async def populate_albums(self, artists: Artist) -> List[Album]:
-        ''' creates a list of Album-databalasses'''
+        '''creates a list of Album-databalasses'''
         progressbar = ProgressBar(len(self.Artists))
         Albums = []
         spotify = self.spot
@@ -86,11 +82,11 @@ class Recentlier:
                             release_date=album['release_date'],
                             name=album['name'],
                             artist_name=artist.name,
-                            artist_id=artist.id
-                            ))
+                            artist_id=artist.id,
+                        )
+                    )
                     if spotify.config.verbose:
-                        log(f'Appended {album["name"]} to Albums',
-                            silent=True)
+                        log(f'Appended {album["name"]} to Albums', silent=True)
 
             while 'next' in results and results['next'] is not None:
                 results = await spotify.next(results)
@@ -103,18 +99,18 @@ class Recentlier:
                                 release_date=album['release_date'],
                                 name=album['name'],
                                 artist_name=artist.name,
-                                artist_id=artist.id
-                                ))
+                                artist_id=artist.id,
+                            )
+                        )
                         if spotify.config.verbose:
-                            log(f'Appended {album["name"]} to Albums',
-                                silent=True)
+                            log(f'Appended {album["name"]} to Albums', silent=True)
 
             progressbar.progress()
         progressbar.done()
         return Albums
 
     async def add_to_buffer(self, input: str) -> Any:
-        ''' Return only when buffer is full'''
+        '''Return only when buffer is full'''
 
         if len(self.albumbuffer) + 1 == 20:
             self.albumbuffer.append(input)
@@ -142,16 +138,14 @@ class Recentlier:
                 for track in await self.get_track_data(data, album):
                     Tracks.append(track)
                     if self.spot.config.verbose:
-                        log(f'Appended {track.artist_name} - {track.name} to Tracks',
-                            silent=True)
+                        log(f'Appended {track.artist_name} - {track.name} to Tracks', silent=True)
 
         if len(self.albumbuffer) != 0:
             # Check if buffer has "leftover" albums in it.
 
             for track in await self.get_track_data(self.albumbuffer, album):
                 Tracks.append(track)
-                log(f'Appended {track.artist_name} - {track.name} to Tracks',
-                    silent=True)
+                log(f'Appended {track.artist_name} - {track.name} to Tracks', silent=True)
 
         progressbar.done()
         return Tracks
@@ -186,8 +180,9 @@ class Recentlier:
                                 release_date=release_date,
                                 duration=duration,
                                 artist_id=track_artist_id,
-                                artist_name=track_artist_name
-                                ))
+                                artist_name=track_artist_name,
+                            )
+                        )
 
             while 'next' in album and album['next'] is not None:
                 album = await spotify.next(album)
@@ -211,12 +206,13 @@ class Recentlier:
                                     release_date=release_date,
                                     duration=duration,
                                     artist_id=track_artist_id,
-                                    artist_name=track_artist_name
-                                    ))
+                                    artist_name=track_artist_name,
+                                )
+                            )
         return Tracks
 
 
-class Playlists():
+class Playlists:
     playlist: Playlist = []
 
     def __init__(self, recentlier):
@@ -236,14 +232,9 @@ class Playlists():
         else:
             me = await self.spot.me()
             log('Updating online playlist')
-            await self.spot.add_tracks(
-                                      me['id'],
-                                      self.playlist.id,
-                                      [i.id for i in new_tracks]
-                                    )
+            await self.spot.add_tracks(me['id'], self.playlist.id, [i.id for i in new_tracks])
             for track in new_tracks:
                 log(f'{track.artist_name} - {track.name} ({track.release_date})')
-
 
     async def get_playlist_tracks(self) -> dict:
         spotify = self.spot
@@ -254,14 +245,12 @@ class Playlists():
         return tracks
 
     async def get_playlist(self) -> Playlist:
-        ''' gets or creates the playlist id '''
+        '''gets or creates the playlist id'''
         spotify = self.spot
         me = await spotify.me()
 
         if self.playlist:
-            result = await spotify.playlist(
-                me['id'],
-                playlist_id=self.playlist.id)
+            result = await spotify.playlist(me['id'], playlist_id=self.playlist.id)
 
             if result:
                 log(f'Using cached playlist "{self.playlist.name}"')
@@ -282,22 +271,25 @@ class Playlists():
             playlists = []
             result = await spotify.playlists(me['id'], limit=50)
             for playlist in result['items']:
-                playlists.append(Playlist(
-                    id=playlist['id'],
-                    owner=playlist['owner']['display_name'],
-                    tracks=playlist['tracks']['href'],
-                    name=playlist['name']
-
-                ))
-            while 'next' in result and result['next'] is not None:
-                result = await spotify.next(result)
-                for playlist in result['items']:
-                    playlists.append(Playlist(
+                playlists.append(
+                    Playlist(
                         id=playlist['id'],
                         owner=playlist['owner']['display_name'],
                         tracks=playlist['tracks']['href'],
-                        name=playlist['name']
-                        ))
+                        name=playlist['name'],
+                    )
+                )
+            while 'next' in result and result['next'] is not None:
+                result = await spotify.next(result)
+                for playlist in result['items']:
+                    playlists.append(
+                        Playlist(
+                            id=playlist['id'],
+                            owner=playlist['owner']['display_name'],
+                            tracks=playlist['tracks']['href'],
+                            name=playlist['name'],
+                        )
+                    )
 
             for playlist in playlists:
                 if spotify.config.playlist_name == playlist.name:
@@ -311,28 +303,20 @@ class Playlists():
                 log('Unable to find a playlist. Creating one instead.')
 
                 playlist_id = await spotify.create_playlist(
-                    me['id'],
-                    spotify.config.playlist_name,
-                    public=True,
-                    collaborative=False,
-                    description='Recentlier Releaseder')
+                    me['id'], spotify.config.playlist_name, public=True, collaborative=False, description='Recentlier Releaseder'
+                )
 
                 new = 1
-                playlist_id = playlist_id['id']
+                playlist_id = playlist_id['id'](asd=None)
 
         else:
             playlist_id = spotify.config.playlist_id
 
         if playlist_id:
-            result = await spotify.playlist(
-                me['id'],
-                playlist_id=playlist_id)
+            result = await spotify.playlist(me['id'], playlist_id=playlist_id)
 
             playlist = Playlist(
-                id=result['id'],
-                owner=result['owner']['display_name'],
-                tracks=result['tracks']['href'],
-                name=result['name']
+                id=result['id'], owner=result['owner']['display_name'], tracks=result['tracks']['href'], name=result['name']
             )
 
         if new:
@@ -342,9 +326,7 @@ class Playlists():
         return playlist
 
     async def order(self):
-        ''' sorts the entire list by release_date'''
-        ordered = sorted(
-            self.recentlier.Tracks,
-            key=operator.attrgetter('release_date'))
+        '''sorts the entire list by release_date'''
+        ordered = sorted(self.recentlier.Tracks, key=operator.attrgetter('release_date'))
 
-        return ordered[-int(self.spot.config.playlist_size):]
+        return ordered[-int(self.spot.config.playlist_size) :]

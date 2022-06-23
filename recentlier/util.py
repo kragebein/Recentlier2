@@ -8,31 +8,27 @@ import requests
 from dataclasses import dataclass
 from datetime import datetime
 
+
 @dataclass
 class Config:
-    username:str = 'changeme'
-    client_secret:str = 'changeme'
-    client_id:str = 'changeme'
-    scope = ["playlist-read-private", 
-            "user-follow-read",
-            "playlist-modify-private",
-            "playlist-modify-public" 
-            ]
+    username: str = 'changeme'
+    client_secret: str = 'changeme'
+    client_id: str = 'changeme'
+    scope = ["playlist-read-private", "user-follow-read", "playlist-modify-private", "playlist-modify-public"]
     callback: str = "http://127.0.0.1:8080"
     playlist_name: str = 'Recentlier2'
-    playlist_size:int = 50
+    playlist_size: int = 50
     playlist_id: str = None
     output: bool = True
     verbose: bool = False
 
-
     def __init__(self) -> None:
-            ''' Initialize the table if not already initialized'''
-            
-            self.load()
+        '''Initialize the table if not already initialized'''
+
+        self.load()
 
     def load(self) -> dataclass:
-        ''' Loads the config into class, and returns the class'''
+        '''Loads the config into class, and returns the class'''
         if os.path.exists('config.json'):
             with open('config.json', 'r') as configfile:
                 self.data = json.loads(configfile.read())
@@ -54,55 +50,54 @@ class Config:
             sys.exit(0)
 
     def write(self) -> None:
-        ''' Dumps the current config to config.json '''
+        '''Dumps the current config to config.json'''
         with open('config.json', 'w') as configfile:
-            configfile.write(json.dumps({
-                            "username": self.username,
+            configfile.write(
+                json.dumps(
+                    {
+                        "username": self.username,
+                        "spotify": {
+                            "_comment": "Spotify Credentials",
+                            "client_id": self.client_id,
+                            "client_secret": self.client_secret,
+                            "scope": self.scope,
+                            "callback": self.callback,
+                        },
+                        "playlist": {
+                            "_comment": "Playlist Information",
+                            "name": self.playlist_name,
+                            "size": self.playlist_size,
+                            "id": self.playlist_id,
+                        },
+                        "output": {"on": self.output, "verbose": self.verbose},
+                    },
+                    indent=2,
+                )
+            )
+        log('Updated config.json.')
 
-                            "spotify": {
-                                "_comment": "Spotify Credentials",
-                                "client_id": self.client_id,
-                                "client_secret": self.client_secret,
-                                "scope": self.scope,
-                                "callback": self.callback
-                                },
-                            "playlist": {
-                                "_comment": "Playlist Information",
-                                "name": self.playlist_name,
-                                "size": self.playlist_size,
-                                "id": self.playlist_id
-                                },
-                            "output": {
-                                "on": self.output,
-                                "verbose": self.verbose
-                            }
-
-                        }, indent=2))
-        log(f'Updated config.json.')
 
 def log(n, silent=False):
-    ''' Print while logging'''
+    '''Print while logging'''
     now = datetime.now().strftime("%d/%m/%y %H:%M:%S")
     now = f'[{now}] '
     if not silent:
         print(now + str(n))
     with open('recentlier.log', 'a') as log:
         try:
-            log.write(now+str(n)+'\n') 
+            log.write(now + str(n) + '\n')
         except UnicodeEncodeError:
-            log.write(now+str('UnicodeError - Unknown Track - Unkown Name (unknown Releasedate)')+'\n')
+            log.write(now + str('UnicodeError - Unknown Track - Unkown Name (unknown Releasedate)') + '\n')
             pass
 
 
-
 class Cache:
-
     def __init__(self, obj):
 
         self.obj = obj
-        
+
     async def write(self) -> None:
-        ''' pickles and dumps the data '''
+        '''pickles and dumps the data'''
         data = [self.obj.Artists, self.obj.Albums, self.obj.Tracks, self.obj.playlist.playlist]
         try:
             with open('cache.db', 'wb') as handle:
@@ -110,11 +105,9 @@ class Cache:
                 pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
         except KeyboardInterrupt:
             log('Currently writing data to file, cant exit now.')
-        
-
 
     async def load(self, main) -> None:
-        ''' unpickles and returns the data from cache'''
+        '''unpickles and returns the data from cache'''
         data = ([], [], [], [])
         if os.path.exists('cache.db'):
             try:
@@ -136,15 +129,14 @@ class Cache:
 
 
 class ProgressBar:
-    
     def __init__(self, end):
         self.end = end
         self.now = 0
 
     def calculate(self):
-        ''' Calculates at what percentage we are'''
+        '''Calculates at what percentage we are'''
         self.now += 1
-        return str(self.now/self.end * 100).split()[0][:4]
+        return str(self.now / self.end * 100).split()[0][:4]
 
     def progress(self):
         print(f'\r{self.calculate()}% ', flush=True, end='')
@@ -152,13 +144,13 @@ class ProgressBar:
     def done(self):
         print('\r', flush=True, end='')
 
-class Flags:
 
+class Flags:
     def __init__(self, obj):
         self.main = obj
         self.run_tracks = False
         self.update_playlist = False
-        
+
     async def check(self, what, data):
 
         if what == 'artists':
@@ -168,7 +160,7 @@ class Flags:
                 self.main.Artists = data
                 self.run_tracks = True
 
-            elif len(data) ==  len(self.main.Artists):
+            elif len(data) == len(self.main.Artists):
                 log(f'Artists found: {str(len(data))}')
 
             elif len(data) < len(self.main.Artists):
@@ -184,7 +176,7 @@ class Flags:
                 self.run_tracks = True
                 await self.main.cache.write()
 
-            elif len(data) ==  len(self.main.Albums):
+            elif len(data) == len(self.main.Albums):
                 log(f'Albums found: {str(len(data))} (Nothing to update)')
                 self.run_tracks = False
 
@@ -195,14 +187,14 @@ class Flags:
                 await self.main.cache.write()
 
         elif what == 'tracks':
-            
+
             if len(data) > len(self.main.Tracks):
                 log(f'Tracks found: {str(len(data))} (new: {str(len(data) - len(self.main.Tracks))})')
                 self.main.Tracks = data
                 self.update_playlist = True
                 await self.main.cache.write()
 
-            elif len(data) ==  len(self.main.Tracks):
+            elif len(data) == len(self.main.Tracks):
                 log(f'Tracks found: {str(len(data))}')
 
             elif len(data) < len(self.main.Tracks):
@@ -211,10 +203,12 @@ class Flags:
                 self.update_playlist = True
                 await self.main.cache.write()
 
+
 class Version:
 
-    version = 2.02
+    version = 2.04
     text = None
+
     def __init__(self):
         self.text = f'Recentlier {self.version}'
         try:
@@ -222,11 +216,12 @@ class Version:
             version = r.text
             if self.version < int(version):
                 self.text += f' - Update available: {self.version} -> {version}'
-        except:
+        except Exception:
             pass
         finally:
             print(self.text)
             time.sleep(1)
+
 
 class RecentError(BaseException):
     pass

@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+
 @dataclass(order=True)
 class Track:
     id: str
@@ -8,14 +9,12 @@ class Track:
     duration: int
     artist_id: str
     artist_name: str
-    
+
     def __post_init__(self):
-        ''' enables comparison and sorting'''
+        '''enables comparison and sorting'''
         object.__setattr__(self, 'release_date', self.release_date)
 
-   
-    
-    def __eq__(self, _id): 
+    def __eq__(self, _id):
         return self.id == _id or f'{self.artist_name} - {self.name}' == _id
 
 
@@ -36,8 +35,9 @@ class Artist:
     id: str
     name: str
 
-    def __eq__(self, id): 
+    def __eq__(self, id):
         return self.id == id
+
 
 @dataclass
 class Playlist:
@@ -46,5 +46,5 @@ class Playlist:
     owner: str
     tracks: list
 
-    def __eq__(self, _in): 
+    def __eq__(self, _in):
         return self.name == _in or self.id == _in
