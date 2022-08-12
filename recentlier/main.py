@@ -2,7 +2,7 @@
 import asyncio
 import operator
 
-from typing import Any, List
+from typing import Any, Dict, List
 from recentlier.spotify import Spotify
 from recentlier.util import log, Cache, ProgressBar, Flags, Version
 from recentlier.classes import Artist, Playlist, Track, Album
@@ -54,16 +54,16 @@ class Recentlier:
         results = await spotify.get_artists(limit=50)
         for artist in results['artists']['items']:
             Artists.append(Artist(id=artist['id'], name=artist['name']))
-            if spotify.config.verbose:
-                log(f'Appended {artist["name"]} to Artists', silent=True)
+
+            log(f'Appended {artist["name"]} to Artists', silent=not spotify.config.verbose)
 
         while 'next' in results['artists'] and results['artists']['next'] is not None:
             results = await spotify.next(results['artists'])
 
             for artist in results['artists']['items']:
                 Artists.append(Artist(id=artist['id'], name=artist['name']))
-                if spotify.config.verbose:
-                    log(f'Appended {artist["name"]} to Artists', silent=True)
+
+                log(f'Appended {artist["name"]} to Artists', silent=not spotify.config.verbose)
         return Artists
 
     async def populate_albums(self, artists: Artist) -> List[Album]:
@@ -85,8 +85,8 @@ class Recentlier:
                             artist_id=artist.id,
                         )
                     )
-                    if spotify.config.verbose:
-                        log(f'Appended {album["name"]} to Albums', silent=True)
+
+                    log(f'Appended {album["name"]} to Albums', silent=not spotify.config.verbose)
 
             while 'next' in results and results['next'] is not None:
                 results = await spotify.next(results)
@@ -102,8 +102,8 @@ class Recentlier:
                                 artist_id=artist.id,
                             )
                         )
-                        if spotify.config.verbose:
-                            log(f'Appended {album["name"]} to Albums', silent=True)
+
+                        log(f'Appended {album["name"]} to Albums', silent=not spotify.config.verbose)
 
             progressbar.progress()
         progressbar.done()
@@ -137,18 +137,25 @@ class Recentlier:
             else:
                 for track in await self.get_track_data(data, album):
                     Tracks.append(track)
-                    if self.spot.config.verbose:
-                        log(f'Appended {track.artist_name} - {track.name} to Tracks', silent=True)
+
+                    log(f'Appended {track.artist_name} - {track.name} to Tracks', silent=not self.spot.config.verbose)
 
         if len(self.albumbuffer) != 0:
             # Check if buffer has "leftover" albums in it.
 
             for track in await self.get_track_data(self.albumbuffer, album):
                 Tracks.append(track)
-                log(f'Appended {track.artist_name} - {track.name} to Tracks', silent=True)
+                log(f'Appended {track.artist_name} - {track.name} to Tracks', silent=not self.spot.config.verbose)
 
         progressbar.done()
         return Tracks
+
+    async def check_artist_in_track(self, artists: List[Dict]) -> bool:
+        '''Checks if one of the artists of this track is in the db'''
+        for artist in artists:
+            if artist['id'] in self.Artists:
+                return artist
+        return False
 
     async def get_track_data(self, data: list, _album) -> List[Track]:
         Tracks = []
@@ -163,15 +170,14 @@ class Recentlier:
                 track_id = track['id']
                 track_name = track['name']
                 duration = track['duration_ms'] * 1000
-                track_artist_id = track['artists'][0]['id']
-                track_artist_name = track['artists'][0]['name']
+                track_artists = track['artists']
 
                 if track_id in self.tracks:
                     # skip this track, if track id has been processed.
                     continue
 
                 else:
-                    if track_artist_id in self.Artists:
+                    if get_artist := await self.check_artist_in_track(track_artists):
                         self.tracks.append(track_id)
                         Tracks.append(
                             Track(
@@ -179,8 +185,8 @@ class Recentlier:
                                 name=track_name,
                                 release_date=release_date,
                                 duration=duration,
-                                artist_id=track_artist_id,
-                                artist_name=track_artist_name,
+                                artist_id=get_artist['id'],
+                                artist_name=get_artist['name'],
                             )
                         )
 
@@ -190,14 +196,13 @@ class Recentlier:
                     track_id = track['id']
                     track_name = track['name']
                     duration = track['duration_ms'] * 1000
-                    track_artist_id = track['artists'][0]['id']
-                    track_artist_name = track['artists'][0]['name']
+                    track_artists = track['artists']
 
                     if track_id in self.tracks:
                         continue
 
                     else:
-                        if track_artist_id in self.Artists:
+                        if get_artist := await self.check_artist_in_track(track_artists):
                             self.tracks.append(track_id)
                             Tracks.append(
                                 Track(
@@ -205,8 +210,8 @@ class Recentlier:
                                     name=track_name,
                                     release_date=release_date,
                                     duration=duration,
-                                    artist_id=track_artist_id,
-                                    artist_name=track_artist_name,
+                                    artist_id=get_artist['id'],
+                                    artist_name=get_artist['name'],
                                 )
                             )
         return Tracks
@@ -220,7 +225,7 @@ class Playlists:
         self.recentlier = recentlier
 
     async def update(self):
-        log('Playlist about to be updated.')
+        log('----------------------------')
         self.playlist = await self.get_playlist()
         new_tracks = await self.order()
         new_tracks = new_tracks[::-1]
