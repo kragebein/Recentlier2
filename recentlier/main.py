@@ -22,7 +22,6 @@ class Recentlier:
         self.Tracks: list = []
         self.playlist = Playlists(self)
         self.cache = Cache(self)
-        self.current: str = ''
 
     async def run(self):
         # Preload from cache (if any)
