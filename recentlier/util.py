@@ -205,8 +205,9 @@ class Flags:
 
 
 class Version:
+    ''' Checks for new version. '''
 
-    version = 2.04
+    version: float = 2.04
     text = None
 
     def __init__(self):
@@ -214,10 +215,11 @@ class Version:
         try:
             r = requests.get('https://raw.githubusercontent.com/kragebein/Recentlier2/main/version.txt')
             version = r.text
-            if self.version < int(version):
-                self.text += f' - Update available: {self.version} -> {version}'
+            if self.version < float(version):
+                self.text += f'\n\nUpdate available: {self.version} -> {version}'
         except Exception:
             pass
+
         finally:
             print(self.text)
             time.sleep(1)
