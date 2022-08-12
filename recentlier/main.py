@@ -55,7 +55,7 @@ class Recentlier:
         results = await spotify.get_artists(limit=50)
         for artist in results['artists']['items']:
             Artists.append(Artist(id=artist['id'], name=artist['name']))
-            
+
             log(f'Appended {artist["name"]} to Artists', silent=not spotify.config.verbose)
 
         while 'next' in results['artists'] and results['artists']['next'] is not None:
@@ -63,7 +63,7 @@ class Recentlier:
 
             for artist in results['artists']['items']:
                 Artists.append(Artist(id=artist['id'], name=artist['name']))
-                
+
                 log(f'Appended {artist["name"]} to Artists', silent=not spotify.config.verbose)
         return Artists
 
@@ -86,7 +86,7 @@ class Recentlier:
                             artist_id=artist.id,
                         )
                     )
-                    
+
                     log(f'Appended {album["name"]} to Albums', silent=not spotify.config.verbose)
 
             while 'next' in results and results['next'] is not None:
@@ -103,7 +103,7 @@ class Recentlier:
                                 artist_id=artist.id,
                             )
                         )
-                        
+
                         log(f'Appended {album["name"]} to Albums', silent=not spotify.config.verbose)
 
             progressbar.progress()
@@ -138,7 +138,7 @@ class Recentlier:
             else:
                 for track in await self.get_track_data(data, album):
                     Tracks.append(track)
-                    
+
                     log(f'Appended {track.artist_name} - {track.name} to Tracks', silent=not self.spot.config.verbose)
 
         if len(self.albumbuffer) != 0:
@@ -156,7 +156,6 @@ class Recentlier:
         for artist in artists:
             if artist['id'] in self.Artists:
                 return artist
-        
         return False
 
     async def get_track_data(self, data: list, _album) -> List[Track]:
@@ -166,8 +165,6 @@ class Recentlier:
         results = await spotify.get_several_albums(data)
 
         for album in results['albums']:
-            # TODO: 
-            # 
             release_date = album['release_date']
 
             for track in album['tracks']['items']:
