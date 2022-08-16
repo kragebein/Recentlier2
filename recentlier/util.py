@@ -77,7 +77,7 @@ class Config:
         log('Updated config.json.')
 
 
-def log(n, silent=False):
+def log(n, silent=False) -> None:
     '''Print while logging'''
     now = datetime.now().strftime("%d/%m/%y %H:%M:%S")
     now = f'[{now}] '
@@ -129,19 +129,21 @@ class Cache:
 
 
 class ProgressBar:
-    def __init__(self, end):
+    ''' Holds the progress percentage of the current task'''
+    def __init__(self,end: int, text: str = None) -> None:
+        self.text = text + ' ' if not None else ''
         self.end = end
         self.now = 0
 
-    def calculate(self):
+    def calculate(self) -> None:
         '''Calculates at what percentage we are'''
         self.now += 1
         return str(self.now / self.end * 100).split()[0][:4]
 
-    def progress(self):
-        print(f'\r{self.calculate()}% ', flush=True, end='')
+    def progress(self) -> None:
+        print(f'\r{self.text}{self.calculate()}% ', flush=True, end='')
 
-    def done(self):
+    def done(self) -> None:
         print('\r', flush=True, end='')
 
 
@@ -151,7 +153,8 @@ class Flags:
         self.run_tracks = False
         self.update_playlist = False
 
-    async def check(self, what, data):
+    async def check(self, what, data) -> None:
+        ''' This long function determines wether or not if '''
 
         if what == 'artists':
 
@@ -206,11 +209,13 @@ class Flags:
 
 class Version:
     ''' Checks for new version. '''
-
-    version: float = 2.04
+    try:
+        version: float = float(open('version.txt').read())
+    except Exception:
+        version = 'Couldnt read version.txt'
     text = None
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.text = f'Recentlier {self.version}'
         try:
             r = requests.get('https://raw.githubusercontent.com/kragebein/Recentlier2/main/version.txt')
