@@ -2,7 +2,7 @@
 import asyncio
 import operator
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 from recentlier.spotify import Spotify
 from recentlier.util import log, Cache, ProgressBar, Flags, Version
 from recentlier.classes import Artist, Playlist, Track, Album
@@ -68,7 +68,7 @@ class Recentlier:
 
     async def populate_albums(self, artists: Artist) -> List[Album]:
         '''creates a list of Album-databalasses'''
-        progressbar = ProgressBar(len(self.Artists))
+        progressbar = ProgressBar(len(self.Artists), 'Populating albums')
         Albums = []
         spotify = self.spot
         for artist in artists:
@@ -124,8 +124,11 @@ class Recentlier:
         return False
 
     async def populate_tracks(self, albums: Album) -> List[Track]:
+        '''Creates a list of Track-dataclasses'''
 
-        progressbar = ProgressBar(len(albums))
+        temporary_tracks = []
+        duplicates = {}
+        progressbar = ProgressBar(len(albums), 'Populating tracks')
 
         Tracks = []
 
@@ -136,18 +139,43 @@ class Recentlier:
                 continue
             else:
                 for track in await self.get_track_data(data, album):
-                    Tracks.append(track)
-
-                    log(f'Appended {track.artist_name} - {track.name} to Tracks', silent=not self.spot.config.verbose)
-
+                    # We should check against duplicates here
+                    temporary_tracks.append(track)
         if len(self.albumbuffer) != 0:
             # Check if buffer has "leftover" albums in it.
-
             for track in await self.get_track_data(self.albumbuffer, album):
-                Tracks.append(track)
-                log(f'Appended {track.artist_name} - {track.name} to Tracks', silent=not self.spot.config.verbose)
+                temporary_tracks.append(track)
 
         progressbar.done()
+        
+        progressbar = ProgressBar(len(temporary_tracks), 'Sorting tracks')
+        for track in temporary_tracks:
+            duplicate = f'{track.artist_name} - {track.name}'
+            if duplicate in temporary_tracks:
+                log(f'{duplicate} is a duplicate', silent=not self.spot.config.verbose)
+                # To be dealt with later
+                duplicates[duplicate] = []
+                duplicates[duplicate].append(track)
+                progressbar.progress()
+            else:
+                # Approved for final track list.
+                Tracks.append(track)
+                log(f'Appended {track.artist_name} - {track.name} to Tracks', silent=not self.spot.config.verbose)
+                progressbar.progress()
+        progressbar.done()
+        temporary_tracks = []
+        print(duplicates)
+
+        progressbar = ProgressBar(len(duplicates), 'Sorting by release date')
+        for track in duplicates:
+            # Get the earliest release date from the duplicates.
+            earliest = min(duplicates[track], key=lambda x: x.release_date)
+            log(f'{earliest.name} has the earliest release date of {earliest.release_date}', silent=not self.spot.config.verbose)
+            Tracks.append(earliest)
+            log(f'Appended {earliest.artist_name} - {earliest.name} to Tracks', silent=not self.spot.config.verbose)
+            progressbar.progress()
+        progressbar.done()
+            
         return Tracks
 
     async def check_artist_in_track(self, artists: List[Dict]) -> bool:
@@ -312,7 +340,7 @@ class Playlists:
                 )
 
                 new = 1
-                playlist_id = playlist_id['id'](asd=None)
+                playlist_id = playlist_id['id']
 
         else:
             playlist_id = spotify.config.playlist_id
