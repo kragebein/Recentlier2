@@ -208,3 +208,13 @@ class Spotify:
             success = await self.exceptionhandler(R)
             if success:
                 await self.remove_playlist_tracks(*args, **kwargs)
+
+    async def tracks(self, *args, **kwargs) -> spotipy.Spotify.tracks:
+        if not self.sp:
+            await self.client()
+        try:
+            return self.sp.tracks(*args, **kwargs)
+        except SpotifyException as R:
+            success = await self.exceptionhandler(R)
+            if success:
+                await self.tracks(*args, **kwargs)
