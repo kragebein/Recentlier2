@@ -93,7 +93,6 @@ def log(n, silent=False) -> None:
 
 class Cache:
     def __init__(self, obj):
-
         self.obj = obj
 
     async def write(self) -> None:
@@ -129,8 +128,9 @@ class Cache:
 
 
 class ProgressBar:
-    ''' Holds the progress percentage of the current task'''
-    def __init__(self,end: int, text: str = None) -> None:
+    '''Holds the progress percentage of the current task'''
+
+    def __init__(self, end: int, text: str = None) -> None:
         self.text = text + ' ' if not None else ''
         self.end = end
         self.now = 0
@@ -154,10 +154,9 @@ class Flags:
         self.update_playlist = False
 
     async def check(self, what, data) -> None:
-        ''' This long function determines wether or not if '''
+        '''This long function determines wether or not if'''
 
         if what == 'artists':
-
             if len(data) > len(self.main.Artists):
                 log(f'Artists found: {str(len(data))} (new: {str(len(data) - len(self.main.Artists))})')
                 self.main.Artists = data
@@ -172,7 +171,6 @@ class Flags:
                 self.run_tracks = True
 
         elif what == 'albums':
-
             if len(data) > len(self.main.Albums):
                 log(f'Albums found: {str(len(data))} (new: {str(len(data) - len(self.main.Albums))})')
                 self.main.Albums = data
@@ -190,7 +188,6 @@ class Flags:
                 await self.main.cache.write()
 
         elif what == 'tracks':
-
             if len(data) > len(self.main.Tracks):
                 log(f'Tracks found: {str(len(data))} (new: {str(len(data) - len(self.main.Tracks))})')
                 self.main.Tracks = data
@@ -208,11 +205,12 @@ class Flags:
 
 
 class Version:
-    ''' Checks for new version. '''
+    '''Checks for new version.'''
+
     try:
         version: float = float(open('version.txt').read())
     except Exception:
-        version = 'Couldnt read version.txt'
+        version = 9999
     text = None
 
     def __init__(self) -> None:
