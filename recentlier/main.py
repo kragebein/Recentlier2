@@ -2,20 +2,19 @@
 import asyncio
 import operator
 
-from typing import Any, Dict, List, Tuple
+from datetime import datetime
+from typing import Any, Dict, List
 from recentlier.spotify import Spotify
 from recentlier.util import log, Cache, ProgressBar, Flags, Version
 from recentlier.classes import Artist, Playlist, Track, Album
 
 
 class Recentlier:
-
     spot = Spotify()
     albumbuffer: list = []
     tracks: list = []
 
     def __init__(self):
-
         Version()
         self.Artists: list = []
         self.Albums: list = []
@@ -28,6 +27,12 @@ class Recentlier:
         while True:
             await self.cache.load(self)
             flags = Flags(self)
+
+            # Prepare the playlist first.
+
+            playlist = await self.playlist.get_playlist()
+            self.playlist.playlist = playlist
+            log(f'Playlist: {playlist.name} / {playlist.id}')
 
             artists = await self.populate_artists()
             await flags.check('artists', artists)
@@ -63,7 +68,10 @@ class Recentlier:
             for artist in results['artists']['items']:
                 Artists.append(Artist(id=artist['id'], name=artist['name']))
 
-                log(f'Appended {artist["name"]} to Artists', silent=not spotify.config.verbose)
+                log(
+                    f'Appended {artist["name"]} to Artists',
+                    silent=not spotify.config.verbose,
+                )
         return Artists
 
     async def populate_albums(self, artists: Artist) -> List[Album]:
@@ -86,7 +94,10 @@ class Recentlier:
                         )
                     )
 
-                    log(f'Appended {album["name"]} to Albums', silent=not spotify.config.verbose)
+                    log(
+                        f'Appended {album["name"]} to Albums',
+                        silent=not spotify.config.verbose,
+                    )
 
             while 'next' in results and results['next'] is not None:
                 results = await spotify.next(results)
@@ -103,7 +114,10 @@ class Recentlier:
                             )
                         )
 
-                        log(f'Appended {album["name"]} to Albums', silent=not spotify.config.verbose)
+                        log(
+                            f'Appended {album["name"]} to Albums',
+                            silent=not spotify.config.verbose,
+                        )
 
             progressbar.progress()
         progressbar.done()
@@ -147,7 +161,7 @@ class Recentlier:
                 temporary_tracks.append(track)
 
         progressbar.done()
-        
+
         progressbar = ProgressBar(len(temporary_tracks), 'Sorting tracks')
         for track in temporary_tracks:
             duplicate = f'{track.artist_name} - {track.name}'
@@ -160,22 +174,30 @@ class Recentlier:
             else:
                 # Approved for final track list.
                 Tracks.append(track)
-                log(f'Appended {track.artist_name} - {track.name} to Tracks', silent=not self.spot.config.verbose)
+                log(
+                    f'Appended {track.artist_name} - {track.name} to Tracks',
+                    silent=not self.spot.config.verbose,
+                )
                 progressbar.progress()
         progressbar.done()
         temporary_tracks = []
-        print(duplicates)
 
         progressbar = ProgressBar(len(duplicates), 'Sorting by release date')
         for track in duplicates:
             # Get the earliest release date from the duplicates.
             earliest = min(duplicates[track], key=lambda x: x.release_date)
-            log(f'{earliest.name} has the earliest release date of {earliest.release_date}', silent=not self.spot.config.verbose)
+            log(
+                f'{earliest.name} has the earliest release date of {earliest.release_date}',
+                silent=not self.spot.config.verbose,
+            )
             Tracks.append(earliest)
-            log(f'Appended {earliest.artist_name} - {earliest.name} to Tracks', silent=not self.spot.config.verbose)
+            log(
+                f'Appended {earliest.artist_name} - {earliest.name} to Tracks',
+                silent=not self.spot.config.verbose,
+            )
             progressbar.progress()
         progressbar.done()
-            
+
         return Tracks
 
     async def check_artist_in_track(self, artists: List[Dict]) -> bool:
@@ -246,7 +268,7 @@ class Recentlier:
 
 
 class Playlists:
-    playlist: Playlist = []
+    playlist: str = None
 
     def __init__(self, recentlier):
         self.spot = recentlier.spot
@@ -254,7 +276,6 @@ class Playlists:
 
     async def update(self):
         log('----------------------------')
-        self.playlist = await self.get_playlist()
         new_tracks = await self.order()
         new_tracks = new_tracks[::-1]
         playlist_tracks = await self.get_playlist_tracks()
@@ -266,8 +287,10 @@ class Playlists:
             me = await self.spot.me()
             log('Updating online playlist')
             await self.spot.add_tracks(me['id'], self.playlist.id, [i.id for i in new_tracks])
+
             for track in new_tracks:
                 log(f'{track.artist_name} - {track.name} ({track.release_date})')
+        await self.update_playlist_details()
 
     async def get_playlist_tracks(self) -> dict:
         spotify = self.spot
@@ -276,6 +299,14 @@ class Playlists:
         for track in results['items']:
             tracks.append(track['track']['id'])
         return tracks
+
+    async def update_playlist_details(self):
+        '''Sets last update in playlist description.'''
+        spotify = self.spot
+        # Get timestamp for now
+        now = datetime.now().strftime("%d/%m/%y %H:%M:%S")
+
+        await spotify.playlist_details(self.playlist.id, description=f'Last updated {now}')
 
     async def get_playlist(self) -> Playlist:
         '''gets or creates the playlist id'''
@@ -336,11 +367,18 @@ class Playlists:
                 log('Unable to find a playlist. Creating one instead.')
 
                 playlist_id = await spotify.create_playlist(
-                    me['id'], spotify.config.playlist_name, public=True, collaborative=False, description='Recentlier Releaseder'
+                    me['id'],
+                    spotify.config.playlist_name,
+                    public=True,
+                    collaborative=False,
+                    description='Recentlier Releaseder',
                 )
 
                 new = 1
                 playlist_id = playlist_id['id']
+
+                # We need to let the creation propegate before we can read it.
+                await asyncio.sleep(1)
 
         else:
             playlist_id = spotify.config.playlist_id
@@ -349,7 +387,10 @@ class Playlists:
             result = await spotify.playlist(me['id'], playlist_id=playlist_id)
 
             playlist = Playlist(
-                id=result['id'], owner=result['owner']['display_name'], tracks=result['tracks']['href'], name=result['name']
+                id=result['id'],
+                owner=result['owner']['display_name'],
+                tracks=result['tracks']['href'],
+                name=result['name'],
             )
 
         if new:

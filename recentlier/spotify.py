@@ -10,7 +10,6 @@ config = Config()
 
 
 class Spotify:
-
     config = Config()
     token = None
     sp = None
@@ -218,3 +217,13 @@ class Spotify:
             success = await self.exceptionhandler(R)
             if success:
                 await self.tracks(*args, **kwargs)
+
+    async def playlist_details(self, *args, **kwargs) -> spotipy.Spotify.playlist_tracks:
+        if not self.sp:
+            await self.client()
+        try:
+            return self.sp.playlist_change_details(*args, **kwargs)
+        except SpotifyException as R:
+            success = await self.exceptionhandler(R)
+            if success:
+                await self.playlist_details(*args, **kwargs)
