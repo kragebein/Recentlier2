@@ -218,7 +218,7 @@ class Spotify:
             if success:
                 await self.tracks(*args, **kwargs)
 
-    async def playlist_details(self, *args, **kwargs) -> spotipy.Spotify.playlist_tracks:
+    async def playlist_details(self, *args, **kwargs) -> spotipy.Spotify.playlist_change_details:
         if not self.sp:
             await self.client()
         try:
