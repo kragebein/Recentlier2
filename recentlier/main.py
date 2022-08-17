@@ -3,6 +3,7 @@ import asyncio
 import operator
 
 from datetime import datetime
+import sys
 from typing import Any, Dict, List
 from recentlier.spotify import Spotify
 from recentlier.util import log, Cache, ProgressBar, Flags, Version
@@ -47,6 +48,11 @@ class Recentlier:
             if flags.update_playlist:
                 await self.playlist.update()
                 await self.cache.write()
+
+            if self.spot.config.quitafter:
+                # If true, exit when done.
+                log('Done. Quitting.')
+                sys.exit(0)
 
             log('Sleeping for 6 hours.')
             await asyncio.sleep(21600)

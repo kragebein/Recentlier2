@@ -42,6 +42,7 @@ class Config:
                 self.playlist_id = self.data['playlist']['id']
                 self.output = self.data['output']['on']
                 self.verbose = self.data['output']['verbose']
+                self.quitafter = self.data['application']['quit_after_update']
 
                 return self
         else:
@@ -69,7 +70,14 @@ class Config:
                             "size": self.playlist_size,
                             "id": self.playlist_id,
                         },
-                        "output": {"on": self.output, "verbose": self.verbose},
+                        "output": {
+                            "on": self.output,
+                            "verbose": self.verbose,
+                        },
+                        "application": {
+                            "_comment": "Application Behaviour",
+                            "quit_after_update": self.quitafter,
+                        },
                     },
                     indent=2,
                 )
