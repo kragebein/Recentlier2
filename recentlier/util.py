@@ -21,6 +21,7 @@ class Config:
     playlist_id: str = None
     output: bool = True
     verbose: bool = False
+    quitafter: bool = False
 
     def __init__(self) -> None:
         '''Initialize the table if not already initialized'''
