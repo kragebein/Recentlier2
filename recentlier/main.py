@@ -146,7 +146,6 @@ class Recentlier:
     async def populate_tracks(self, albums: Album) -> List[Track]:
         '''Creates a list of Track-dataclasses'''
 
-        temporary_tracks = []
         duplicates = {}
         progressbar = ProgressBar(len(albums), 'Populating tracks')
 
@@ -159,41 +158,51 @@ class Recentlier:
                 continue
             else:
                 for track in await self.get_track_data(data, album):
-                    # We should check against duplicates here
-                    temporary_tracks.append(track)
+                    this = f'{track.artist_name} - {track.name}'
+                    if this in duplicates:
+                        duplicates[this].append(track)
+                    else:
+                        duplicates[this] = []
+                        duplicates[this].append(track)
+
         if len(self.albumbuffer) != 0:
             # Check if buffer has "leftover" albums in it.
             for track in await self.get_track_data(self.albumbuffer, album):
-                temporary_tracks.append(track)
+                this = f'{track.artist_name} - {track.name}'
+                if this in duplicates:
+                    duplicates[this].append(track)
+                else:
+                    duplicates[this] = []
+                    duplicates[this].append(track)
 
         progressbar.done()
 
-        progressbar = ProgressBar(len(temporary_tracks), 'Sorting tracks')
-        for track in temporary_tracks:
-            duplicate = f'{track.artist_name} - {track.name}'
-            if duplicate in temporary_tracks:
-                log(f'{duplicate} is a duplicate', silent=not self.spot.config.verbose)
-                # To be dealt with later
-                duplicates[duplicate] = []
-                duplicates[duplicate].append(track)
-                progressbar.progress()
-            else:
-                # Approved for final track list.
-                Tracks.append(track)
-                log(
-                    f'Appended {track.artist_name} - {track.name} to Tracks',
-                    silent=not self.spot.config.verbose,
-                )
-                progressbar.progress()
-        progressbar.done()
-        temporary_tracks = []
+        #        progressbar = ProgressBar(len(temporary_tracks), 'Sorting tracks')
+        #        for track in temporary_tracks:
+        #            duplicate = f'{track.artist_name} - {track.name}'
+        #            if duplicate in temporary_tracks:
+        #                log(f'{duplicate} is a duplicate', silent=not self.spot.config.verbose)
+        #                # To be dealt with later
+        #                duplicates[duplicate] = []
+        #                duplicates[duplicate].append(track)
+        #                progressbar.progress()
+        #            else:
+        #                # Approved for final track list.
+        #                Tracks.append(track)
+        #                log(
+        #                    f'Appended {track.artist_name} - {track.name} to Tracks',
+        #                    silent=not self.spot.config.verbose,
+        #                )
+        #                progressbar.progress()
+        #        progressbar.done()
 
-        progressbar = ProgressBar(len(duplicates), 'Sorting by release date')
+        progressbar = ProgressBar(len(duplicates), 'Sorting tracks')
         for track in duplicates:
             # Get the earliest release date from the duplicates.
             earliest = min(duplicates[track], key=lambda x: x.release_date)
             log(
-                f'{earliest.name} has the earliest release date of {earliest.release_date}',
+                f'{earliest.name} has the earliest release date of {earliest.release_date} out of'
+                f' {len(duplicates[track])} duplicates',
                 silent=not self.spot.config.verbose,
             )
             Tracks.append(earliest)
