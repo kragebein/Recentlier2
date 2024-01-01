@@ -4,11 +4,17 @@ import operator
 
 from datetime import datetime
 import sys
+import signal
 from typing import Any, Dict, List
 from recentlier.spotify import Spotify
 from recentlier.util import log, Cache, ProgressBar, Flags, Version
 from recentlier.classes import Artist, Playlist, Track, Album
 
+def handler(sigum, frame) -> None:
+    print('CTRL-C was pressed. Exiting.')
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, handler)
 
 class Recentlier:
     spot = Spotify()
