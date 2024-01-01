@@ -15,7 +15,7 @@ class Config:
     client_secret: str = 'changeme'
     client_id: str = 'changeme'
     scope = ["playlist-read-private", "user-follow-read", "playlist-modify-private", "playlist-modify-public"]
-    callback: str = "http://127.0.0.1:8080"
+    callback: str = "http://127.0.0.1:8081"
     playlist_name: str = 'Recentlier2'
     playlist_size: int = 50
     playlist_id: str = None
